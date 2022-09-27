@@ -1,0 +1,25 @@
+{
+    "name": "Bitbucket PR Stats Helper",
+    "description": "This Chrome Extension helps pull request reviewers and others quickly view which file extensions are used within Bitbucket.",
+    "version": "0.1",
+    "manifest_version": 3,
+    "author": "Austin Jenkins",
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "https://bitbucket.org/*"
+            ],
+            "js": [
+                "contentscript.js"
+            ],
+            "run_at": "document_end"
+        }
+    ],
+    "permissions": [
+        "tabs",
+        "scripting"
+    ]
+}
