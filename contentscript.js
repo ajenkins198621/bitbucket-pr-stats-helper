@@ -67,6 +67,12 @@ class BitbuckPrStats {
     drawNewContainers() {
         this.pullRequestIds.forEach(({ trRef, pullRequestId }) => {
 
+            // Check if existing - if yes, skip creating new container
+            const hasExistingContainer = document.getElementById(`pullRequestExtensionTrContainer-${pullRequestId}`);
+            if (hasExistingContainer) {
+                return;
+            }
+
             // Create Container
             const newTrContainer = document.createElement('tr');
             newTrContainer.id = `pullRequestExtensionTrContainer-${pullRequestId}`; // Add id so can be deleted above
@@ -76,12 +82,6 @@ class BitbuckPrStats {
             newTdContainer.id = `pullRequestExtensionTdContainer-${pullRequestId}`;
             newTdContainer.colSpan = "24"; // TODO this should be dynamic by getting the total colspan from the previous row that is visible (some tds have display none);
             newTdContainer.classList.add('pullRequestExtensionTd');
-            newTdContainer.style.backgroundColor = "#F6EFA6";
-            newTdContainer.style.padding = "3px 10px";
-            newTdContainer.style.fontSize = "12px";
-            newTdContainer.style.width = "100%";
-            newTdContainer.style.color = "#66B3BA";
-            newTdContainer.style.fontWeight = "bold";
 
             // Create Loading Text
             const loadingText = document.createElement('div');
@@ -105,9 +105,22 @@ class BitbuckPrStats {
 
     }
 
+    getBitbucketUrlDetails() {
+        const hrefParts = window.location.href.split("/");
+        for(let i = 0; i < hrefParts.length; i++) {
+            if(hrefParts[i].trim() === "bitbucket.org") {
+                return {
+                    org: hrefParts[i + 1],
+                    repo: hrefParts[i + 2]
+                }
+            }
+        }
+        return { org: "", repo: "" }; 
+    }
+
     async fetchPullRequest(pullRequestId) {
-        // TODO Get this URL more dynamically (listen to network requests, etc)
-        const response = await fetch(`https://bitbucket.org/!api/2.0/repositories/vailresorts/vailresorts.digital.ecommerce/pullrequests/${pullRequestId}/diffstat`);
+        const { org, repo } = this.getBitbucketUrlDetails();
+        const response = await fetch(`https://bitbucket.org/!api/2.0/repositories/${org}/${repo}/pullrequests/${pullRequestId}/diffstat`);
         const changes = await response.json();
         if (!changes || !changes.values || !changes.values.length) {
             return;
@@ -131,57 +144,122 @@ class BitbuckPrStats {
             cs: "backend",
             csproj: "neutral",
             svg: "frontend",
-            dotsettings: "netural",
-            yml: "netural",
+            dotsettings: "neutral",
+            yml: "neutral",
             config: "neutral",
             txt: "neutral",
             json: "neutral",
+            resx: "fullstack",
+            ttf: "frontend",
+            woff: "frontend",
+            gitignore: "neutral",
+            eslintignore: "neutral",
+            ico: "frontend",
+            aspx: "backend",
         }
 
-        const fileExtensionsMemo = {};
+        const stackItemInitalObject = {
+            count: 0,
+            filetypes: {},
+            usedStrings: {}
+        }
+
+        const stackMemo = {
+            frontend: {
+                count: 0,
+                filetypes: {},
+                usedStrings: {}
+            },
+            backend: {
+                count: 0,
+                filetypes: {},
+                usedStrings: {}
+            },
+            fullstack: {
+                count: 0,
+                filetypes: {},
+                usedStrings: {}
+            },
+            neutral: {
+                count: 0,
+                filetypes: {},
+                usedStrings: {}
+            },
+            unknown: {
+                count: 0,
+                filetypes: {},
+                usedStrings: {}
+            },
+        };
 
         function setFileExtensionFromString(str) {
             const fileExtensionParts = str.split(".");
-            fileExtensionsMemo[fileExtensionParts[fileExtensionParts.length - 1]] = true;
+            const particalExtension = fileExtensionParts[fileExtensionParts.length - 1].toLowerCase();
+
+            const filePathParts = str.split("/");
+            const fileName = filePathParts[filePathParts.length - 1];
+            const fileNameParts = fileName.split(".");
+            const fullExtension = fileNameParts.filter((part, idx) => {
+                if (idx === 0 && fileNameParts.length > 1) {
+                    return false;
+                }
+                return true;
+            }).join(".");
+
+            const extensionDefinition = extensionDefinitions[particalExtension] || "unknown";
+            if (stackMemo[extensionDefinition].usedStrings[str]) {
+                return;
+            }
+            stackMemo[extensionDefinition].usedStrings[str] = true;
+            if (extensionDefinition === "unknown") {
+                console.log('------> Missing extension', particalExtension);
+            }
+
+            stackMemo[extensionDefinition].count++;
+            if (!stackMemo[extensionDefinition].filetypes[fullExtension]) {
+                stackMemo[extensionDefinition].filetypes[fullExtension] = 0;
+            }
+            stackMemo[extensionDefinition].filetypes[fullExtension]++;
         }
 
         function drawFileExtensions() {
-            Object.keys(fileExtensionsMemo).forEach(extension => {
-                const item = document.createElement('div');
-                if (extensionDefinitions[extension.toLowerCase()]) {
-                    switch (extensionDefinitions[extension.toLowerCase()]) {
-                        case "frontend":
-                            item.style.backgroundColor = "green";
-                            item.style.color = "white";
-                            break;
-                        case "fullstack":
-                            item.style.backgroundColor = "orange";
-                            item.style.color = "white";
-                            break;
-                        case "backend":
-                            item.style.backgroundColor = "purple";
-                            item.style.color = "white";
-                            break;
-                        case "neutral":
-                            item.style.backgroundColor = "black";
-                            item.style.color = "white";
-                            break;
-
-                    }
-                } else {
-                    item.style.backgroundColor = "red";
-                    item.style.color = "white";
+            ['frontend', 'backend', 'fullstack', 'neutral', 'unknown'].forEach(stack => {
+                if (stackMemo[stack].count === 0) {
+                    return;
                 }
-                item.style.padding = "1px 8px";
-                item.style.borderRadius = "10px";
-                item.style.textAlign = "center";
-                item.style.margin = "0 1px";
-                item.style.textTransform = "uppercase";
-                item.style.fontSize = "10px";
 
-                item.textContent = extension.toLowerCase();
-                parentDivContainer.appendChild(item);
+                const dropdownContainer = document.createElement('div');
+                dropdownContainer.classList.add("dropdownContainer")
+
+
+                const item = document.createElement('a');
+                item.classList.add('stackBadge')
+                item.classList.add(stack);
+                item.textContent = `${stackMemo[stack].count} ${stack}`;
+
+
+                const dropdownList = document.createElement('div');
+                dropdownList.classList.add('extensionDropdown');
+                dropdownList.classList.add(stack);
+
+                const dropdownListInner = document.createElement('div');
+                dropdownListInner.classList.add('extensionDropdownInner');
+
+                Object.keys(stackMemo[stack].filetypes).forEach(key => {
+                    const listItem = document.createElement('div');
+                    listItem.textContent = `${stackMemo[stack].filetypes[key]} - ${key}`;
+                    dropdownListInner.appendChild(listItem);
+                });
+
+                dropdownList.appendChild(dropdownListInner);
+
+                dropdownContainer.appendChild(item);
+                dropdownContainer.appendChild(dropdownList);
+
+                parentDivContainer.appendChild(dropdownContainer);
+
             })
+
         }
 
         changes.values.forEach((value, idx) => {
@@ -204,6 +282,7 @@ class BitbuckPrStats {
 let currentUrl = "";
 
 // Array of acceptable URL parts.  Add/remove strings to allow to scripts to execute on other pages.
+// TODO make these regex instead
 const acceptedUrlParts = [
     "/pull-requests"
 ];
@@ -230,7 +309,6 @@ chrome.runtime.onMessage.addListener(({ tab }) => {
 
 
     // Let's go!
-    console.log('Running', tab.url);
     const initiated = new BitbuckPrStats(tab.url);
     initiated.init();
 });

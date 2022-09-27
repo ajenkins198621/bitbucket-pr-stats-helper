@@ -1,0 +1,115 @@
+.pullRequestExtensionTd {
+    background: #dedede;
+    border-radius: 0 0 5px 5px;
+    color: #66B3BA;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 0.025;
+    padding: 5px 5px !important;
+    width: 100%;
+}
+
+.pullRequestExtensionTd .stackBadge,
+.pullRequestExtensionTd .extensionDropdown {
+    border: 2px solid;
+}
+
+.pullRequestExtensionTd .dropdownContainer {
+    display: inline-block;
+    position: relative;
+    text-transform: uppercase;
+}
+
+.pullRequestExtensionTd .stackBadge {
+    border-radius: 8px;
+    cursor: help;
+    font-size: 10px;
+    margin: 0 3px 0 0;
+    padding: 1px 8px;
+    text-align: center;
+    text-transform: uppercase;
+    user-select: none;
+}
+
+.pullRequestExtensionTd .stackBadge:hover {
+    text-decoration: none;
+}
+
+.pullRequestExtensionTd .frontend {
+    background-color: #1a4301;
+    color: #aad576;
+}
+
+.pullRequestExtensionTd .backend {
+    background-color: #7200A3;
+    color: #eab9ff;
+}
+
+.pullRequestExtensionTd .fullstack {
+    background-color: #743F06;
+    color: #F8BA77;
+}
+
+.pullRequestExtensionTd .neutral {
+    background-color: #8E877B;
+    color: #E3E1DE;
+}
+
+.pullRequestExtensionTd .unknown {
+    background-color: #980B2A;
+    color: #f0829a;
+}
+
+.pullRequestExtensionTd .frontend:before {
+    border-bottom-color: #aad576;
+}
+
+.pullRequestExtensionTd .backend:before {
+    border-bottom-color: #eab9ff;
+}
+
+.pullRequestExtensionTd .fullstack:before {
+    border-bottom-color: #F8BA77;
+}
+
+.pullRequestExtensionTd .neutral:before {
+    border-bottom-color: #E3E1DE;
+}
+
+.pullRequestExtensionTd .unknown:before {
+    border-bottom-color: #f0829a;
+}
+
+.pullRequestExtensionTd .extensionDropdown {
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    display: none;
+    left: -5px;
+    margin-top: 5px;
+    min-width: 250px;
+    padding: 5px 10px;
+    position: absolute;
+    text-align: left;
+    z-index: 1000;
+}
+
+.pullRequestExtensionTd .extensionDropdown:before {
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid;
+    clear: both;
+    content: '';
+    height: 0;
+    left: 25px;
+    position: absolute;
+    top: -8px;
+    width: 0;
+}
+
+.pullRequestExtensionTd .dropdownContainer:hover .extensionDropdown {
+    display: block;
+}
+
+.pullRequestExtensionTd .extensionDropdownInner {
+    display: flex;
+    flex-direction: column;
+}
